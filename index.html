@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+    <!-- Metadata to edit -->
+		<title>Writing Robust Bash Scripts</title>
+		<meta name="author" content="Leonardo Gutiérrez">
+    <!-- /Metadata to edit -->
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+		<script>
+			if( window.location.search.match( /print-pdf/gi ) ) {
+				var link = document.createElement( 'link' );
+				link.rel = 'stylesheet';
+				link.type = 'text/css';
+				link.href = 'css/print/pdf.css';
+				document.getElementsByTagName( 'head' )[0].appendChild( link );
+			}
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+			<div class="slides">
+
+        <!-- Title slide -->
+				<section>
+					<h1>Writing Robust Bash Scripts</h1>
+					<p>
+						Leonardo Gutiérrez 🦁
+					</p>
+					<p class="fragment"><ul>
+						<li><b>Twitter:</b> <i>@leonidasgtzr</i></li>
+						<li></b>Github:</b> @leogtzr</li>
+						<li></b>E-mail:</b> <i>leogutierrezramirez@gmail.com</i></li>
+				</ul></p>
+					<aside class="notes">
+            Some notes here
+					</aside>
+				</section>
+
+
+<!-- Overview -->
+				<section>
+					<h1>What can go wrong here?</h1>
+					<pre>
+						<code>
+rm -rf "$STEAMROOT/"*
+						</code>
+					</pre>
+					<p>
+						https://github.com/ValveSoftware/steam-for-linux/issues/3671
+					</p>
+					<aside class="notes">
+					</aside>
+				</section>
+
+				<section>
+					<h1>Or here ... </h1>
+					<code>
+						cp -r "$LOGS"/* /some_dir/logs
+					</code>
+
+					<p class="fragment">
+						<h4>A cool disk space issue 😀</h4>
+					</p>
+				</section>
+
+				<section>
+					<p class="fragment">
+						<pre>
+							<code>
+#!/bin/bash                
+# Don't run it please ...  
+rm -rf "$STEAMROOT"/*      
+exit 0
+							</code>
+						</pre>
+					</p>
+
+					WARNING: If you run this code (as root) your files will be gone!
+ 
+					 Run it safely, replace the rm with an echo ...
+					 <aside class="notes">
+						 Run this code.
+					 </aside>
+				</section>
+
+				<section>
+					<pre>
+						<code>
+< How do we fix it? >        
+-------------------         
+    \  ^___^             
+     \ (ooo)\_______     
+       (___)\       )\/\ 
+             ||----w |    
+             ||     ||
+						</code>
+					</pre>
+				</section>
+
+				<section>
+					<pre>
+						<code>
+set -o unset
+						</code>
+					</pre>
+
+
+					<pre>
+							<code>
+#!/bin/bash
+set -o nounset
+rm -rf "$STEAMROOT"/* 
+exit 0
+							</code>
+					</pre>
+
+					<pre>
+							<code>
+#!/bin/bash
+"${STEAMROOT:?"is not defined 😞"}"
+rm -rf "$STEAMROOT"/*
+exit 0
+							</code>
+					</pre>
+				</section>
+
+				<section>
+					<h2>Fail fast with</h2>
+					<p>
+						set -e
+					</p>
+					<i>or:</i>
+					<p>
+						set -o errexit
+					</p>
+					<p class="fragment">
+						Example: ...
+					</p>
+				</section>
+
+				<section>
+					<pre>
+						<code>
+#!/bin/bash
+set -o errexit
+cp "notfound" "x"
+# something important with x file
+# ...
+exit
+						</code>
+					</pre>
+					You can disable the behaviour with
+					<p>
+						set +o errexit
+					</p>
+					<p>
+						set +e
+					</p>
+					Or:
+					<pre>
+						<code>
+cp "notfound" "hello.txt" || true
+
+cp "notfound" "hello.txt" || :
+						</code>
+					</pre>
+				</section>
+
+				<section>
+					<pre>
+						<code>
+#!/bin/bash
+set -o errexit
+# Critical code
+
+# Disable error checking for
+# non-critical code
+set +o errexit
+cp a b 
+echo "Hello ... "
+
+# When we are done ...
+set -o errexit
+
+echo "World"
+exit 0
+						</code>
+					</pre>
+				</section>
+
+<!-- Version control -->
+
+				<section>
+					<h2>Choose a shebang carefully #!/...</h2>
+				</section>
+
+				<section>
+						<p>#!/bin/bash</p>
+						<p>is totally different than #!/bin/sh in some systems</p>
+					<pre>
+<code>
+$ which bash
+/bin/bash
+$ which sh
+/bin/sh
+$ ls -larth $(which sh)
+lrwxrwxrwx 1 root root 4 sep 26 23:54 /bin/sh -> dash
+</code>
+					</pre>
+				</section>
+
+				<section>
+If you are coding in <i><b>bash</b></i> then use the <b>bash</b> shebang 😎
+
+<pre>
+	<code>
+			   #!/bin/bash
+	</code>
+</pre>
+				</section>
+
+				<section>
+					<p class="fragment_">
+							Do not run your scripts with "sh scriptname" (unless your want to ... )
+					</p>
+
+					<pre>
+						<code>
+#!/bin/bash
+x=1
+((x++))
+echo "x: ${x}"
+		
+exit 0
+						</code>
+					</pre>
+
+					Let's try to run it with "sh scriptname":
+				</section>
+
+				<section>
+<pre>
+	<code>
+0 [16:43]leo@lein ~/wrbsu/src $ sh extensions.sh 
+extensions.sh: 3: extensions.sh: x++: not found
+x: 1
+	</code>
+</pre>
+
+				<p>/bin/sh is not always pointing to the bash binary.</p>
+				</section>
+
+				<section>
+If you want to create a POSIX script use 'checkbashisms' (devscripts package) script to check your script for <i>bashisms</i>:
+
+<pre>
+	<code>
+#!/bin/sh
+
+x=1
+((x++))
+echo "x: ${x}"
+
+exit 0
+	</code>
+</pre>
+
+<pre>
+	<code>
+possible bashism in bashism.sh line 4 ('((' should be '$(('):
+((x++))
+	</code>
+</pre>
+				</section>
+				
+				<section>
+					Use ${var} instead of $var whenever you can
+
+<pre>
+	<code>
+/lib/$ENV_app vs. /lib/${ENV}_app
+	</code>
+</pre>
+
+It is one of the most common mistakes ... (also use set -o nounset)
+				</section>
+
+				<section>
+					Use set -o pipefail
+
+					<pre>
+							<code class="hljs" data-line-numbers="2-4">
+sort 'notfound | uniq && {
+    echo "Life is good :)"      
+}
+
+#!/bin/bash
+if sort "notfound" | uniq; then
+    echo "Life is good" 
+fi         
+
+exit 0
+						</code>
+					</pre>
+
+					What will be the output?
+				</section>
+
+				<section>
+	<pre>
+		<code>
+sort: cannot read: notfound: No such file or directory
+Life is good
+		</code>
+</pre>
+Solution:
+				</section>
+
+				<section>
+<pre>
+	<code>
+#!/bin/bash
+set -o pipefail
+if sort "notfound" | uniq; then
+    echo "Life is good" 
+fi         
+
+exit
+	</code>
+</pre>
+				</section>
+
+		<section>
+			Use <b><i>local</i></b> for variables within functions.
+			<p>Variables in <i>bash</i> have global <i>scope</i>.</p>
+
+			<pre>
+				<code>
+some_function() {
+    for ((i = 0; i < 10; i++)); do
+        printf "Value: %d\n" ${i}
+    done
+}
+                                
+some_function
+# i variable is still set here.
+echo "value: ${i}"
+				</code>
+			</pre>
+			Let's fix it ...
+		</section>
+
+		<section>
+			<pre>
+				<code>
+some_function() {                  
+    local i 
+    for ((i = 0; i < 10; i++)); do
+        printf "Value: %d\n" "${i}"
+    done
+}                                  
+								
+some_function
+# i variable is still set here.
+echo "value: ${i}"
+				</code>
+			</pre>
+		</section>
+
+		<section>
+			<h2>&& with || should be used carefully</h2>
+			<pre>
+				<code>
+cp "${0}" "${0}.bkp" && {
+    echo "Backup created successfully ... "
+    . "file_does_not_exist"
+} || {
+    echo "Error creating backup ... " >&2
+    exit 80
+}
+				</code>
+			</pre>
+
+			Let's fix it ... 
+
+			<aside class="notes">
+				https://unix.stackexchange.com/questions/88850/precedence-of-the-shell-logical-operators
+			</aside>
+		</section>
+
+		<section>
+			<pre>
+				<code>
+if cp "${0}" "${0}.bkp"; then
+    echo "Backup created successfully ... "
+    . "file_does_not_exist"
+else
+    echo "Error creating backup ... " >&2
+    exit 80
+fi
+				</code>
+			</pre>
+		</section>
+
+		<section>
+			<h2>cron jobs: "silence is golden" 🤫</h2>
+
+			<section>
+				<p>What is wrong with the following code?</p>
+				<pre>* * * * * /path/remover.sh                          # crontab -l</pre>
+
+				<i>remover.sh</i> content:
+				<pre>
+#!/bin/bash
+rm "/tmp/doesnotexist.sh"
+exit 0
+					</pre>
+					Let's run it 😌 ...
+			</section>
+		</section>
+
+		<section>
+			<pre>
+				<code>
+0 [21:48]leo@lein ~ $ mail
+"/var/mail/leo": 1 message 1 unread
+>U   1 Cron Daemon        dom ago 18 21:29  22/735   Cron &lt;leo@lein&gt; /path/remover.sh
+? 
+				</code>
+			</pre>
+
+			<pre>
+				<code>
+? 1
+Return-Path: &lt;leo@lein.lan&gt;
+X-Original-To: leo
+Delivered-To: leo@lein.lan
+Received: by lein.lan (Postfix, from userid 1000)
+	id 57E814A033B; Sun, 18 Aug 2019 21:29:01 -0600 (MDT)
+From: root@lein.lan (Cron Daemon)
+To: leo@lein.lan
+Subject: Cron &lt;leo@lein&gt; /path/remover.sh
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+X-Cron-Env: &lt;SHELL=/bin/sh&gt;
+X-Cron-Env: &lt;HOME=/home/leo&gt;
+X-Cron-Env: &lt;PATH=/usr/bin:/bin&gt;
+X-Cron-Env: &lt;LOGNAME=leo&gt;
+Message-Id: &lt;20190819032901.57E814A033B@lein.lan&gt;
+Date: Sun, 18 Aug 2019 21:29:01 -0600 (MDT)
+X-IMAPbase: 1566186481 2
+Status: O
+X-UID: 1
+
+rm: cannot remove '/tmp/doesnotexist.sh': No such file or directory
+?
+				</code>
+			</pre>
+		</section>
+
+		<section>
+			<p class="fragment">Solution?</p>
+			<p class="fragment">Handle redirection properly ... </p>			
+			<pre>
+<p class="fragment">
+* * * * * /path/remover.sh > /path/remover.log 2>&1
+</p>
+</pre>
+or:
+<pre>
+	rm "/tmp/doesnotexist.sh" 2> "/path/log.log"
+	# or:
+	rm "/tmp/doesnotexist.sh" > "/path/log.log" 2>&1
+</pre>
+		</section>
+
+		<section>
+			<h2>Exit your scripts with an explicit exit (n>0) on any non-normal exit.</h2>
+			<pre>
+			<p class="fragment">
+				Example:
+	<code>
+readonly conf_file_not_found=81
+
+if [[ ! -f "${conf_file}" ]]; then
+    # log, mail or send a notification
+    exit ${conf_file_not_found}
+fi
+	</code>
+
+			</p>
+		</pre>
+
+		<p class="fragment">
+			Just imagine how painful would be to find out that your critical job has been failing for two months ...
+		</p>
+
+		</section>
+
+		<section>
+			<h3>Cleaning up resources with the trap command</h3>
+<pre>
+#!/bin/bash
+clean() {
+    echo "Cleaning temporary files!"
+    echo "Done"
+    trap - INT TERM EXIT
+    exit 0
+}                                    
+
+trap 'clean' EXIT SIGINT SIGTERM
+
+echo "I am done ... "
+sleep 30s
+
+exit 0
+</pre>
+		</section>
+
+		<section>
+			<h2>Some best practices ... </h2>
+			<p class="fragment">
+				<ul>
+					<li>- Word Splitting (always double quote your variables!)</li>
+					<li>- Code your script with long options when you are not in the command line (terminal)</li>
+					<li>- Use $(...) instead of `...`</li>
+					<li>- https://www.shellcheck.net <:)</li>
+				</ul>
+			</p>
+		</section>
+
+<!-- Summary -->
+				<!-- <section>
+					<h1>Summary</h1>
+					<p class="fragment_"><ul>
+							<li>abc1</li>
+							<li>abc2</li>
+							<li>abc3</li>
+							<li>abc4</li>
+							<li>abc5</li>
+							<li>abc6</li>
+							<li>abc7</li>
+					</ul></p>
+					<aside class="notes">
+					</aside>
+				</section> -->
+
+				<section>
+					<h2>Q / A</h2>
+					<p>
+						<img src="img/qa.png" />
+					</p>
+				</section>
+
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: false,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Parallax scrolling
+				// parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+				// parallaxBackgroundSize: '2100px 900px',
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
+
