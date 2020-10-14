@@ -68,6 +68,13 @@ rm -rf "$STEAMROOT/"*
 					<p>
 						https://github.com/ValveSoftware/steam-for-linux/issues/3671
 					</p>
+
+					<pre>
+						<code>
+rm -rf "/"*	# ☹
+						</code>
+					</pre>
+
 					<aside class="notes">
 					</aside>
 				</section>
@@ -97,7 +104,8 @@ exit 0
 
 					WARNING: If you run this code (as root) your files will be gone!
  
-					 Run it safely, replace the rm with an echo ...
+					<hr/>
+					 Be careful when you see code like this...
 					 <aside class="notes">
 						 Run this code.
 					 </aside>
@@ -130,6 +138,7 @@ set -o nounset
 #!/bin/bash
 set -o nounset
 rm -rf "$STEAMROOT"/* 
+...
 exit 0
 							</code>
 					</pre>
@@ -137,8 +146,9 @@ exit 0
 					<pre>
 							<code>
 #!/bin/bash
-"${STEAMROOT:?"is not defined 😞"}"
+"${STEAMROOT:? "is not defined 😞"}"
 rm -rf "$STEAMROOT"/*
+...
 exit 0
 							</code>
 					</pre>
