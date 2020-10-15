@@ -329,7 +329,7 @@ It is one of the most common mistakes ... (also use set -o nounset)
 
 					<pre>
 							<code class="hljs" data-line-numbers="2-4">
-sort 'notfound | uniq && {
+sort "notfound" | uniq && {
     echo "Life is good :)"      
 }
 
