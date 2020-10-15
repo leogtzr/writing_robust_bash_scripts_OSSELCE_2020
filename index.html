@@ -466,7 +466,9 @@ Backup created successfully ...
 			<h2>cron jobs: "silence is golden" 🤫</h2>
 
 			<section>
-				<p>What is wrong with the following code?</p>
+				<p>What can go wrong with the following code if the script triggers errors that are not redirected
+					properly?
+				</p>
 				<pre>* * * * * /path/remover.sh                          # crontab -l</pre>
 
 				<i>remover.sh</i> content:
@@ -533,12 +535,27 @@ or:
 	# or:
 	rm "/tmp/doesnotexist.sh" > "/path/log.log" 2>&1
 </pre>
+
+<h4>Or:</h4>
+
+<pre>
+Set MAILTO to ""		
+</pre>
+
 		</section>
 
 		<section>
 			<h2>Exit your scripts with an explicit exit (n>0) on any non-normal exit.</h2>
+
 			<pre>
-			<p class="fragment">
+				<code>
+scp file.csv X@Y:/path
+echo "File sent successfully"
+exit 0
+				</code>
+			</pre>
+
+			<pre>
 				Example:
 	<code>
 readonly conf_file_not_found=81
@@ -548,13 +565,9 @@ if [[ ! -f "${conf_file}" ]]; then
     exit ${conf_file_not_found}
 fi
 	</code>
-
-			</p>
 		</pre>
 
-		<p class="fragment">
 			Just imagine how painful would be to find out that your critical job has been failing for several days ...
-		</p>
 
 		</section>
 
