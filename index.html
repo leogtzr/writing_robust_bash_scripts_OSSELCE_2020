@@ -281,7 +281,7 @@ x: 1
 	</code>
 </pre>
 
-				<p>/bin/sh is not always pointing to the bash binary.</p>
+				<p>/bin/sh is not always pointing to the bash shell.</p>
 				</section>
 
 				<section>
@@ -312,9 +312,14 @@ possible bashism in bashism.sh line 4 ('((' should be '$(('):
 
 <pre>
 	<code>
+ENV=dev
+
 /lib/$ENV_app vs. /lib/${ENV}_app
 	</code>
 </pre>
+
+<h4>$ENV_app</h4>
+<h4>${ENV}_app</h4>
 
 It is one of the most common mistakes ... (also use set -o nounset)
 				</section>
