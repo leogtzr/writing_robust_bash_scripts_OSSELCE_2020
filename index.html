@@ -410,15 +410,26 @@ echo "value: ${i}"
 			<h2>&& with || should be used carefully</h2>
 			<pre>
 				<code>
-cp "${0}" "${0}.bkp" && {
+cp file.txt file.txt.bkp && {
     echo "Backup created successfully ... "
-    . "file_does_not_exist"
+    . "conf.env"
 } || {
     echo "Error creating backup ... " >&2
     exit 80
 }
 				</code>
 			</pre>
+
+			<h3>Output:</h3>
+
+			<pre>
+				<code>
+Backup created successfully ... 
+./example5.sh: line 5: conf.env: No such file or directory
+Error creating backup ...
+				</code>
+			</pre>
+
 
 			Let's fix it ... 
 
@@ -430,9 +441,9 @@ cp "${0}" "${0}.bkp" && {
 		<section>
 			<pre>
 				<code>
-if cp "${0}" "${0}.bkp"; then
+if cp file.txt file.txt.bkp; then
     echo "Backup created successfully ... "
-    . "file_does_not_exist"
+    . "conf.env"
 else
     echo "Error creating backup ... " >&2
     exit 80
